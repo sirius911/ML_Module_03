@@ -42,7 +42,7 @@ def logistic_predict_(x, theta):
     if not isinstance(x, np.ndarray) or not isinstance(theta, np.ndarray):
         print("Error logistic_predict_(): not numpy arrays.")
         return None
-    if len(x) == 0 or len(theta) == 0:
+    if x.size == 0 or theta.size == 0:
         print("Error logistic_predict_(): empty array.")
         return None
     try:
