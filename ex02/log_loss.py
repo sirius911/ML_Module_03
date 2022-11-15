@@ -85,6 +85,8 @@ def log_loss_(y, y_hat, eps=1e-15):
         if y.shape != y_hat.shape or y.shape[1] != 1:
             print("Error in log_loss_() : incompatible shape.")
             return None
+
+        y_hat = y_hat + eps
         inter = []
         for i in range(m):
             elem = (y[i] * math.log(y_hat[i])) + ((1 - y[i]) * math.log(1 - y_hat[i]))
