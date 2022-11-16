@@ -15,6 +15,9 @@ def sigmoid_(x):
     if not isinstance(x, np.ndarray):
         print("Error in sigmoid(): x is not a numpy array.")
         return None
+    if x.size == 0:
+        print("Error in sigmoid(): Empty array")
+        return None
     try:
         m = x.shape[0]
         n = x.shape[1]
@@ -92,8 +95,6 @@ def log_loss_(y, y_hat, eps=1e-15):
             elem = (y[i] * math.log(y_hat[i])) + ((1 - y[i]) * math.log(1 - y_hat[i]))
             inter.append(elem)
         return float(-(1 / m) * sum(inter))
-        # return float(-(1 / m) * sum([(y[i] * math.log(y_hat[i])) + ((1 - y[i]) * math.log(1 - y_hat[i])) for i in range(m)]))
-
 
     except Exception as e:
         print(e)

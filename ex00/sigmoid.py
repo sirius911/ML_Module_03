@@ -15,6 +15,9 @@ def sigmoid_(x):
     if not isinstance(x, np.ndarray):
         print("Error in sigmoid(): x is not a numpy array.")
         return None
+    if x.size == 0:
+        print("Error in sigmoid(): Empty array")
+        return None
     try:
         m = x.shape[0]
         n = x.shape[1]
