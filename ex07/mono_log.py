@@ -59,13 +59,13 @@ def graphic(x_test, y_test, y_hat, zipcode):
 
 def citizens_filtered(citizens, zipcode):
     """ return the citizen array with origin = 1 if zipCode 0 otherwise"""
-
-    for zip in citizens:
+    z = np.copy(citizens)
+    for zip in z:
         if zip[0] == zipcode:
             zip[0] = 1
         else:
             zip[0] = 0
-    return citizens
+    return z
 
 def learning(citizens, bio_data, zipcode, graphics = False):
     """ main learning loop
