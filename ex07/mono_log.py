@@ -24,7 +24,7 @@ def usage():
     print("\tpython mono.py --zipcode=X\n\t\twith X being 0, 1, 2 or 3\n")
     sys.exit(1)
 
-def loading(zipcode):
+def loading():
     try:
         bio_data = pd.read_csv("solar_system_census.csv", dtype=np.float64)[['weight', 'height', 'bone_density']].values
         citizens = pd.read_csv("solar_system_census_planets.csv", dtype=np.float64)[['Origin']].values.reshape(-1, 1)
@@ -32,14 +32,52 @@ def loading(zipcode):
         print(e)
         sys.exit(1)
 
-    # the zipcode is selected ==> 1 other in 0
+    return bio_data, citizens
+
+def graphic(x_test, y_test, y_hat, zipcode):
+    error = np.mean(y_test != y_hat) * 100
+    fig, axis = plt.subplots(3, 1, figsize=(15, 8))
+    fig.suptitle("Succes = {:.2f}% - Error = {:.2f}%".format(100-error, error), fontsize=12)
+    fig.text(0.04, 0.5, planets[zipcode], va='center', rotation='vertical')
+    y_test_text = ['Citizen' if citizen == 1 else 'Foreigner' for citizen in y_test]
+    y_hat_text = ['Citizen' if citizen == 1 else 'Foreigner' for citizen in y_hat]
+    
+    for idx, i in enumerate(["weight", "height", "bone_density"]):
+        axis[idx].scatter(x_test[:, idx], y_test_text, c="b", marker='o', label="true value")
+        axis[idx].scatter(x_test[:, idx], y_hat_text, c="r", marker='x', label="predicted value")
+        axis[idx].set_xlabel(i)
+        axis[idx].set_ylabel('')
+        axis[idx].legend()
+    plt.subplots_adjust(left=0.17,
+                    bottom=0.112, 
+                    right=0.97, 
+                    top=0.933, 
+                    wspace=0.195, 
+                    hspace=0.291)
+    plt.rcParams["figure.figsize"] = (32, 32)
+    plt.show()
+
+def citizens_filtered(citizens, zipcode):
+    """ return the citizen array with origin = 1 if zipCode 0 otherwise"""
+
     for zip in citizens:
         if zip[0] == zipcode:
             zip[0] = 1
         else:
             zip[0] = 0
-    
-    # split data
+    return citizens
+
+def learning(citizens, bio_data, zipcode, graphics = False):
+    """ main learning loop
+        args:
+            citizens = array filtered for zipcode
+            bio_data = array of biologics data
+            zipcode = code of the planet
+            graphics Boolean to show or not the graphics 
+        return:
+            a MylR trained
+    """
+     # split data
     x_train, x_test, y_train, y_test = data_spliter(bio_data, citizens, 0.8)
 
     #normalizer
@@ -48,37 +86,24 @@ def loading(zipcode):
     x_test_ = scaler_x.norme(x_test)
 
     #logistic regression
-    print(f"Training to Citizens of {green}{planets[zipcode]}{reset}...")
+    print(f"Training to Citizens of '{green}{planets[zipcode]}{reset}' ...")
     thetas = np.array(np.ones(4)).reshape(-1, 1)
     mylr = MyLR(thetas, alpha=0.1, max_iter=50000)
     mylr.fit_(x_train_, y_train)
     
     y_hat = np.around(mylr.predict_(x_test_))
-    error = np.mean(y_test != y_hat) * 100
-    
-    fig, axis = plt.subplots(3, 1)
-    fig.suptitle("Error = {:.2f}%".format(error), fontsize=14)
-    fig.text(0.04, 0.5, planets[zipcode], va='center', rotation='vertical')
-    for idx, i in enumerate(["weight", "height", "bone_density"]):
-        axis[idx].scatter(x_test[:, idx], y_test, c="b", marker='o', label="true value")
-        axis[idx].scatter(x_test[:, idx], y_hat, c="r", marker='x', label="predicted value")
-        axis[idx].set_xlabel(i)
-        axis[idx].legend()
-    plt.show()
+    if graphics:
+        graphic(x_test, y_test, y_hat, zipcode)
+    return mylr
 
-    fig = plt.figure()
-    ax = fig.add_subplot(projection='3d')
-    # colors = {1: "b", 0: "r"}
-    colors_true = ["b" if i==1 else "r" for i in y_test]
-    colors_predict = ["g" if i==1 else "r" for i in y_hat]
-    ax.scatter(x_test[:, 0], x_test[:, 1], x_test[:, 2], c=colors_true, marker='o', label="true value")
-    ax.scatter(x_test[:, 0], x_test[:, 1], x_test[:, 2], c=colors_predict, marker="x", label="predicted value")
-    ax.set_xlabel('weight')
-    ax.set_ylabel('height')
-    ax.set_zlabel('bone_density')
-    ax.set_title("Error = {:.2f}%".format(error))
-    ax.legend()
-    plt.show()
+def compute(bio_data, citizens, zipcode, graphics = False):
+
+    # the zipcode is selected ==> 1 other in 0
+    citizens = citizens_filtered(citizens, zipcode)
+
+    #training loop
+    return learning(citizens, bio_data, zipcode, graphics)
+
     
 def main():
     try:
@@ -95,7 +120,9 @@ def main():
         usage()
     if zipcode not in (0, 1, 2, 3):
         usage()
-    loading(zipcode)
+    bio_data, citizens = loading()
+    compute(bio_data, citizens, zipcode, graphics = True)
+    
 if __name__ == "__main__":
     main()
     print("good bye !")
