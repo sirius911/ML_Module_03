@@ -6,6 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from data_spliter import data_spliter
 from Normalizer import Normalizer
+from mpl_toolkits.mplot3d import Axes3D
 
 path = os.path.join(os.path.dirname(__file__), '..', 'ex06')
 sys.path.insert(1, path)
@@ -19,26 +20,39 @@ red = '\033[91m' # rouge
 reset = '\033[0m' #gris, couleur normale
 planets = ['The flying cities of Venus', 'United Nations of Earth', 'Mars Republic', 'The Asteroids’ Belt colonies']
 
-def graph(fig, axis, data_graph):
+def graph(axis, data_graph, dim='2D'):
+    if dim not in ('2D', '3D'):
+        print("Error in graph: bad dim")
+        return
     x = data_graph['x']
     y = data_graph['y']
+    if dim == '3D':
+        z = data_graph['z']
+        z_label = data_graph['z_label']
     x_label = data_graph['x_label']
     y_label = data_graph['y_label']
     true_planet = data_graph['true_planet']
     predicted_planet = data_graph['predicted_value']
-    succes = data_graph['succes']
-    error = data_graph['error']
 
     planet_colors = ['r', 'b', 'c', 'y']
     planet_names = [planets[int(i)] for i in true_planet]
     colors_true = [planet_colors[int(i[0])] for i in true_planet]
     colors_predicted = [planet_colors[i] for i in predicted_planet]
-    pdf = pd.DataFrame({'x':x, "y":y, 'colors':colors_true, 'planet':planet_names})
+    if dim == '2D':
+        pdf = pd.DataFrame({'x':x, "y":y, 'colors':colors_true, 'planet':planet_names})
+    else:
+        pdf = pd.DataFrame({'x':x, "y":y, 'z':z, 'colors':colors_true, 'planet':planet_names})
     for planet, dff in pdf.groupby('planet'):
-        axis.scatter(dff['x'], dff['y'], c=dff['colors'], marker='o', label=planet)
-    axis.scatter(x, y, c=colors_predicted, marker='x', label=None)
+        if dim == '2D':
+            axis.scatter(dff['x'], dff['y'], c=dff['colors'], marker='o', s=20, label=planet)
+            axis.scatter(x, y, c=colors_predicted, marker='x', s=40, label=None)
+        else:
+            axis.scatter(dff['x'], dff['y'], dff['z'], c=dff['colors'], marker='o', label=planet)
+            axis.scatter(x, y, z, c=colors_predicted, marker='x', s=40, label=None)
     axis.set_xlabel(x_label)
     axis.set_ylabel(y_label)
+    if dim == '3D':
+        axis.set_zlabel(z_label)
     axis.legend()
 
 def best_result(array):
@@ -69,7 +83,7 @@ def main():
         #logistic regression
         print(f"Training to Citizens of '{green}{planets[zipcode]}{reset}' ...")
         thetas = np.array(np.ones(4)).reshape(-1, 1)
-        mylr = MyLR(thetas, alpha=0.1, max_iter=1000)
+        mylr = MyLR(thetas, alpha=0.1, max_iter=5000)
         mylr.fit_(x_train_, citizens_filtred)
         list_reg.append(mylr.predict_(x_test_))
 
@@ -98,20 +112,36 @@ def main():
     fig, axis = plt.subplots(3, 1, figsize=(15, 8))
     fig.suptitle("Succes = {:.2f}% - Error = {:.2f}%".format(succes, error), fontsize=12)
 
-    graph(fig, axis[0], {'x':x_test[:, 0], 'y':x_test[:, 1],
+    graph(axis[0], {'x':x_test[:, 0], 'y':x_test[:, 1],
                 'x_label': 'Weight', 'y_label':'Height',
-                'true_planet':y_test, 'predicted_value':predicted_value,
-                'succes':succes,'error':error})
+                'true_planet':y_test, 'predicted_value':predicted_value,}, dim='2D')
 
-    graph(fig, axis[1], {'x':x_test[:, 0], 'y':x_test[:, 2],
+    graph(axis[1], {'x':x_test[:, 0], 'y':x_test[:, 2],
                 'x_label': 'Weight', 'y_label':'Bone density',
-                'true_planet':y_test, 'predicted_value':predicted_value,
-                'succes':succes,'error':error})
-    graph(fig, axis[2], {'x':x_test[:, 2], 'y':x_test[:, 1],
+                'true_planet':y_test, 'predicted_value':predicted_value,}, dim='2D')
+    graph(axis[2], {'x':x_test[:, 2], 'y':x_test[:, 1],
                 'x_label': 'Bone density', 'y_label':'Height',
-                'true_planet':y_test, 'predicted_value':predicted_value,
-                'succes':succes,'error':error})
+                'true_planet':y_test, 'predicted_value':predicted_value,}, dim='2D')
     
+    plt.subplots_adjust(left=0.05,
+                    bottom=0.08, 
+                    right=0.98, 
+                    top=0.93, 
+                    wspace=0.195, 
+                    hspace=0.291)
+    #graph 3D
+    fig = plt.figure()
+    ax = Axes3D(fig)
+    graph(ax, {'x':x_test[:, 0], 'y':x_test[:, 1], 'z':x_test[:, 2],
+                'x_label': 'Weight', 'y_label':'Height', 'z_label':'Bone density',
+                'true_planet':y_test, 'predicted_value':predicted_value,}, dim='3D')
+    
+    plt.subplots_adjust(left=0.05,
+                    bottom=0.08, 
+                    right=0.98, 
+                    top=0.93, 
+                    wspace=0.195, 
+                    hspace=0.291)
     plt.show()
 
 if __name__ == "__main__":
