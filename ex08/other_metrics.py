@@ -1,26 +1,25 @@
 import numpy as np
 
-def perf_measure(y, y_hat):
-    TP = 0
-    FP = 0
-    TN = 0
-    FN = 0
-    y = np.reshape(y, (len(y)))
-    y_hat = np.reshape(y_hat, (len(y_hat)))
-    print(dict.fromkeys(y))
-    types = list(dict.fromkeys(y))
-    print(types)
-    for i in range(len(y_hat)):
-        if y[i] == y_hat[i] == types[0]:
-            TP += 1
-        if y_hat[i] == types[0] and y[i] != y_hat[i]:
-            FP += 1
-        if y[i] == y_hat[i] == types[1]:
-            TN += 1
-        if y_hat[i] == types[1] and y[i] != y_hat[i]:
-            FN += 1
-
-    return (TP, FP, TN, FN)
+def tp_fp_tn_fn_(y, y_hat, pos_label=1):
+    tp = 0
+    fp = 0
+    tn = 0
+    fn = 0
+    try:
+        y = y.flatten()
+        y_hat = y_hat.flatten()
+        for i in range(len(y_hat)):
+            if y[i] == y_hat[i] == pos_label:
+                tp += 1
+            if y_hat[i] == pos_label and y[i] != y_hat[i]:
+                fp += 1
+            if y[i] == y_hat[i] != pos_label:
+                tn += 1
+            if y_hat[i] != pos_label and y[i] != y_hat[i]:
+                fn += 1
+        return (tp, fp, tn, fn)
+    except Exception:
+        return (None, None, None, None)
 
 
 def accuracy_score_(y, y_hat):
@@ -35,6 +34,13 @@ def accuracy_score_(y, y_hat):
     Raises:
         This function should not raise any Exception.
     """
+    tp, fp, tn, fn = tp_fp_tn_fn_(y, y_hat)
+    if tp:
+        try:
+            return ((tp + tn) / (tp + fp + tn + fn))
+        except Exception as e:
+            print(f"Error in accuracy_score_() : {e}")
+    return None
 
 def precision_score_(y, y_hat, pos_label=1):
     """
@@ -49,6 +55,13 @@ def precision_score_(y, y_hat, pos_label=1):
     Raises:
         This function should not raise any Exception.
     """
+    tp, fp, _, _ = tp_fp_tn_fn_(y, y_hat, pos_label)
+    if tp:
+        try:
+            return (tp / (tp + fp))
+        except Exception as e:
+            print(f"Error in precision_score_() : {e}")
+    return None
 
 def recall_score_(y, y_hat, pos_label=1):
     """
@@ -63,6 +76,13 @@ def recall_score_(y, y_hat, pos_label=1):
     Raises:
         This function should not raise any Exception.
     """
+    tp, _, _, fn = tp_fp_tn_fn_(y, y_hat, pos_label)
+    if tp:
+        try:
+            return (tp / (tp + fn))
+        except Exception as e:
+            print(f"Error in recall_score_() : {e}")
+    return None
 
 def f1_score_(y, y_hat, pos_label=1):
     """
@@ -77,3 +97,12 @@ def f1_score_(y, y_hat, pos_label=1):
     Raises:
         This function should not raise any Exception.
     """
+    tp, _, _, _ = tp_fp_tn_fn_(y, y_hat, pos_label)
+    if tp:
+        try:
+            precision = precision_score_(y, y_hat, pos_label)
+            recall = recall_score_(y, y_hat, pos_label)
+            return ((2 * precision * recall) / (precision + recall))
+        except Exception as e:
+            print(f"Error in recall_score_() : {e}")
+    return None
